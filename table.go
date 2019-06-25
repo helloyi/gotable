@@ -12,21 +12,7 @@ type Table struct {
 	v reflect.Value
 }
 
-/*
-[]interface{}
-map[interface{}]interface{}
-{
-0,1,3,4
-x=1,
-}
-
-interface{}
- n
-Table{}
- n
-genericity op
-*/
-// New ...
+// New new a Table from v
 func New(v interface{}) *Table {
 	return &Table{i: v}
 }
