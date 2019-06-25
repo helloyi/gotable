@@ -8,6 +8,9 @@ func (t *Table) getv() reflect.Value {
 	if t.v.Kind() == reflect.Invalid {
 		t.v = reflect.ValueOf(t.i)
 	}
+	// indirect interface{} or Ptr Value
+	t.v = indirect(t.v)
+
 	return t.v
 }
 
