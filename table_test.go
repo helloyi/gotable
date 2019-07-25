@@ -438,4 +438,17 @@ var _ = Describe("Table", func() {
 			ExpectErr(st.Get("X")).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
+	When("each", func() {
+		Specify("EachDo on map", func() {
+			m := map[int]int{
+				1: 1,
+				2: 2,
+			}
+			t := New(m)
+			t.EachDo(func(k, v *Table) error {
+				Expect(m[k.MustInt()]).Should(Equal(v.MustInt()))
+				return nil
+			})
+		})
+	})
 })
