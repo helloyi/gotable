@@ -1,11 +1,13 @@
-#+TITLE: The Table in go
+# The Table in go
+
+[![GoDoc](https://godoc.org/github.com/helloyi/gotable?status.svg)](https://godoc.org/github.com/helloyi/gotable)
 
 Put 'interface{}' on the Table, and to unfold, then, manipulates interface{} value, convenient and simple.
 
-* Usage
+## Usage
 
 Pick up some value from interface{}.
-#+BEGIN_SRC go
+```go
 package main
 
 import (
@@ -50,10 +52,10 @@ func main() {
 	}
 	log.Println(string(data))
 }
-#+END_SRC
+```
 
 For a map:
-#+BEGIN_SRC go
+```go
 package main
 
 import (
@@ -78,10 +80,10 @@ func main() {
 
 	log.Println(sum) // print 3
 }
-#+END_SRC
+```
 
 Set map key:
-#+BEGIN_SRC go
+```go
 package main
 
 import (
@@ -102,4 +104,4 @@ func main() {
 
 	log.Println(t.MustGet(1).MustInt()) // print 100
 }
-#+END_SRC
+```
