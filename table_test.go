@@ -451,4 +451,32 @@ var _ = Describe("Table", func() {
 			})
 		})
 	})
+
+	When("set", func() {
+		Specify("set", func() {
+			m := 123
+			t := New(&m)
+			err := t.Set(2)
+			Expect(err).Should(BeNil())
+			Expect(t.Int()).Should(Equal(2))
+
+			p := &m
+			n := 456
+			t = New(&p)
+			err = t.Set(&n)
+			Expect(err).Should(BeNil())
+			Expect(t.Int()).Should(Equal(456))
+
+			ss := struct {
+				A, B int
+			}{
+				A: 1,
+				B: 2,
+			}
+			t = New(&ss)
+			err = t.MustGet("A").Set(123)
+			Expect(err).Should(BeNil())
+			Expect(t.MustGet("A").Int()).Should(Equal(123))
+		})
+	})
 })

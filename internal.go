@@ -8,10 +8,14 @@ func (t *Table) getv() reflect.Value {
 	if t.v.Kind() == reflect.Invalid {
 		t.v = reflect.ValueOf(t.i)
 	}
-	// indirect interface{} or Ptr Value
-	t.v = indirect(t.v)
 
 	return t.v
+}
+
+// getiv get indirect value of t
+func (t *Table) getiv() reflect.Value {
+	// indirect interface{} or Ptr Value
+	return indirect(t.getv())
 }
 
 func (t *Table) geti() interface{} {
@@ -21,14 +25,10 @@ func (t *Table) geti() interface{} {
 	return t.i
 }
 
-func (t *Table) kind() reflect.Kind {
-	return t.getv().Kind()
-}
-
 //// get op
 
 func (t *Table) mapGet(k interface{}) *Table {
-	v := t.getv().MapIndex(reflect.ValueOf(k))
+	v := t.getiv().MapIndex(reflect.ValueOf(k))
 	if v.Kind() == reflect.Invalid {
 		return nil
 	}
@@ -36,17 +36,17 @@ func (t *Table) mapGet(k interface{}) *Table {
 }
 
 func (t *Table) sliceGet(idx int) *Table {
-	l := t.getv().Len()
+	l := t.getiv().Len()
 	if idx >= l {
 		return nil
 	}
 
-	v := t.getv().Index(idx)
+	v := t.getiv().Index(idx)
 	return &Table{v: v}
 }
 
-func (d *Table) structGet(field string) *Table {
-	v := d.getv().FieldByName(field)
+func (t *Table) structGet(field string) *Table {
+	v := t.getiv().FieldByName(field)
 	if v.Kind() == reflect.Invalid {
 		return nil
 	}
@@ -56,31 +56,31 @@ func (d *Table) structGet(field string) *Table {
 //// put op
 
 func (t *Table) mapPut(k, v interface{}) error {
-	if t.getv().IsNil() {
-		t.v = reflect.MakeMap(t.getv().Type())
+	if t.getiv().IsNil() {
+		t.v = reflect.MakeMap(t.getiv().Type())
 		t.i = t.v.Interface()
 	}
-	t.getv().SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
+	t.getiv().SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
 	return nil
 }
 
 func (t *Table) arrayPut(idx int, v interface{}) error {
-	cap := t.getv().Cap()
+	cap := t.getiv().Cap()
 	if idx >= cap {
 		return nil
 	}
-	ev := t.getv().Index(idx)
+	ev := t.getiv().Index(idx)
 	ev.Set(reflect.ValueOf(v))
 	return nil
 }
 
 func (t *Table) slicePut(idx int, v interface{}) error {
-	l := t.getv().Len()
+	l := t.getiv().Len()
 	if idx < l { // set
-		ev := t.getv().Index(idx)
+		ev := t.getiv().Index(idx)
 		ev.Set(reflect.ValueOf(v))
 	} else { // append
-		sv := t.getv()
+		sv := t.getiv()
 		x := reflect.ValueOf(v)
 		zv := reflect.Zero(x.Type())
 		for i := l; i < idx; i++ {
@@ -96,7 +96,7 @@ func (t *Table) slicePut(idx int, v interface{}) error {
 
 // structPut ...
 func (t *Table) structPut(fn string, v interface{}) error {
-	fv := t.getv().FieldByName(fn)
+	fv := t.getiv().FieldByName(fn)
 	if fv.IsValid() {
 		return &ErrNotExist{"Table.structPut", fn + " field"}
 	}
@@ -105,39 +105,39 @@ func (t *Table) structPut(fn string, v interface{}) error {
 }
 
 func (t *Table) bool() bool {
-	return t.getv().Bool()
+	return t.getiv().Bool()
 }
 
 func (t *Table) int() int64 {
-	return t.getv().Int()
+	return t.getiv().Int()
 }
 
 func (t *Table) uint() uint64 {
-	return t.getv().Uint()
+	return t.getiv().Uint()
 }
 
 func (t *Table) float() float64 {
-	return t.getv().Float()
+	return t.getiv().Float()
 }
 
 func (t *Table) complex_() complex128 {
-	return t.getv().Complex()
+	return t.getiv().Complex()
 }
 
 func (t *Table) string() string {
-	return t.getv().String()
+	return t.getiv().String()
 }
 
 func (t *Table) interface_() interface{} {
-	return t.getv().Interface()
+	return t.getiv().Interface()
 }
 
 //// map op
 
 func (t *Table) mapMap() map[*Table]*Table {
-	l := t.getv().Len()
+	l := t.getiv().Len()
 	m := make(map[*Table]*Table, l)
-	iter := t.getv().MapRange()
+	iter := t.getiv().MapRange()
 	for iter.Next() {
 		k := iter.Key()
 		v := iter.Value()
@@ -147,9 +147,9 @@ func (t *Table) mapMap() map[*Table]*Table {
 }
 
 func (t *Table) sliceMap() map[*Table]*Table {
-	l := t.getv().Len()
+	l := t.getiv().Len()
 	m := make(map[*Table]*Table, l)
-	v := t.getv()
+	v := t.getiv()
 	for i := 0; i < l; i++ {
 		ev := v.Index(i)
 		m[&Table{i: i}] = &Table{v: ev}
@@ -158,9 +158,9 @@ func (t *Table) sliceMap() map[*Table]*Table {
 }
 
 func (t *Table) structMap() map[*Table]*Table {
-	num := t.getv().NumField()
+	num := t.getiv().NumField()
 	m := make(map[*Table]*Table, num)
-	rv := t.getv()
+	rv := t.getiv()
 	rt := rv.Type()
 	for i := 0; i < num; i++ {
 		fn := rt.Field(i).Name
@@ -173,9 +173,9 @@ func (t *Table) structMap() map[*Table]*Table {
 //// slice op
 
 func (t *Table) sliceSlice() []*Table {
-	l := t.getv().Len()
+	l := t.getiv().Len()
 	s := make([]*Table, l)
-	v := t.getv()
+	v := t.getiv()
 	for i := 0; i < l; i++ {
 		ev := v.Index(i)
 		s[i] = &Table{v: ev}
@@ -184,9 +184,9 @@ func (t *Table) sliceSlice() []*Table {
 }
 
 func (t *Table) structSlice() []*Table {
-	num := t.getv().NumField()
+	num := t.getiv().NumField()
 	s := make([]*Table, num)
-	rv := t.getv()
+	rv := t.getiv()
 	for i := 0; i < num; i++ {
 		fv := rv.Field(i)
 		s[i] = &Table{v: fv}
@@ -197,9 +197,9 @@ func (t *Table) structSlice() []*Table {
 //// alist op
 
 func (t *Table) mapAList() [][2]*Table {
-	l := t.getv().Len()
+	l := t.getiv().Len()
 	alist := make([][2]*Table, 0, l)
-	iter := t.getv().MapRange()
+	iter := t.getiv().MapRange()
 	for iter.Next() {
 		k := iter.Key()
 		v := iter.Value()
@@ -209,9 +209,9 @@ func (t *Table) mapAList() [][2]*Table {
 }
 
 func (t *Table) sliceAList() [][2]*Table {
-	l := t.getv().Len()
+	l := t.getiv().Len()
 	alist := make([][2]*Table, 0, l)
-	v := t.getv()
+	v := t.getiv()
 	for i := 0; i < l; i++ {
 		ev := v.Index(i)
 		alist = append(alist, [2]*Table{&Table{i: i}, &Table{v: ev}})
@@ -220,9 +220,9 @@ func (t *Table) sliceAList() [][2]*Table {
 }
 
 func (t *Table) structAList() [][2]*Table {
-	num := t.getv().NumField()
+	num := t.getiv().NumField()
 	alist := make([][2]*Table, 0, num)
-	rv := t.getv()
+	rv := t.getiv()
 	rt := rv.Type()
 	for i := 0; i < num; i++ {
 		fn := rt.Field(i).Name
@@ -235,9 +235,9 @@ func (t *Table) structAList() [][2]*Table {
 //// plist op
 
 func (t *Table) mapPList() []*Table {
-	l := t.getv().Len()
+	l := t.getiv().Len()
 	plist := make([]*Table, 0, 2*l)
-	iter := t.getv().MapRange()
+	iter := t.getiv().MapRange()
 	for iter.Next() {
 		k := iter.Key()
 		v := iter.Value()
@@ -247,9 +247,9 @@ func (t *Table) mapPList() []*Table {
 }
 
 func (t *Table) slicePList() []*Table {
-	l := t.getv().Len()
+	l := t.getiv().Len()
 	plist := make([]*Table, 0, 2*l)
-	v := t.getv()
+	v := t.getiv()
 	for i := 0; i < l; i++ {
 		ev := v.Index(i)
 		plist = append(plist, &Table{i: i}, &Table{v: ev})
@@ -258,9 +258,9 @@ func (t *Table) slicePList() []*Table {
 }
 
 func (t *Table) structPList() []*Table {
-	num := t.getv().NumField()
+	num := t.getiv().NumField()
 	plist := make([]*Table, 0, 2*num)
-	rv := t.getv()
+	rv := t.getiv()
 	rt := rv.Type()
 	for i := 0; i < num; i++ {
 		fn := rt.Field(i).Name

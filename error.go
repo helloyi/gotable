@@ -22,9 +22,22 @@ type (
 		Method string
 	}
 
+	// ErrNotExist ...
 	ErrNotExist struct {
 		Method string
 		Thing  string
+	}
+
+	// ErrCannotSet ...
+	ErrCannotSet struct {
+		Method string
+	}
+
+	// ErrTypeUnequal ...
+	ErrTypeUnequal struct {
+		Method string
+		Kind1  reflect.Kind
+		Kind2  reflect.Kind
 	}
 )
 
@@ -54,4 +67,12 @@ func (e *ErrCannotBeNil) Error() string {
 
 func (e *ErrNotExist) Error() string {
 	return "table: call of " + e.Method + " not exist of " + e.Thing
+}
+
+func (e *ErrCannotSet) Error() string {
+	return "table: call of " + e.Method + " on unaddressable value"
+}
+
+func (e *ErrTypeUnequal) Error() string {
+	return "table: call of " + e.Method + " between " + e.Kind1.String() + " and " + e.Kind2.String()
 }
