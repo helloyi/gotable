@@ -1,6 +1,7 @@
 package table
 
 import (
+	"fmt"
 	"math/bits"
 
 	. "github.com/onsi/ginkgo"
@@ -11,20 +12,20 @@ func ExpectErr(rets ...interface{}) Assertion {
 	return Expect(rets[1])
 }
 
-var _ = Describe("Table", func() {
-	When("bool type", func() {
-		Specify("Bool", func() {
+var _ = Describe("Gets", func() {
+	Context("with Bool()", func() {
+		Specify("from bool kind", func() {
 			b := true
 			t := New(b)
 			Expect(t.Bool()).To(Equal(b))
-
-			// other type
-			st := New("test")
-			ExpectErr(st.Bool()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.Bool()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
-	When("uint type", func() {
-		Specify("Uint", func() {
+	Context("with Uint()", func() {
+		Specify("from uint type", func() {
 			x := uint(12)
 			ts := []*Table{
 				New(x),
@@ -42,12 +43,19 @@ var _ = Describe("Table", func() {
 			} else {
 				ExpectErr(ut64.Uint()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 			}
-
-			// other type
-			st := New("test")
-			ExpectErr(st.Uint()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Uint8", func() {
+		Specify("from ptr kind", func() {
+			x := uint(1)
+			t := New(&x)
+			Expect(t.Uint()).Should(Equal(x))
+		})
+		Specify("from other type", func() {
+			t := New("test")
+			ExpectErr(t.Uint()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+	})
+	Context("with Uint8()", func() {
+		Specify("from uint8 kind", func() {
 			x := uint8(12)
 			ts := []*Table{
 				New(uint8(x)),
@@ -55,12 +63,19 @@ var _ = Describe("Table", func() {
 			for _, t := range ts {
 				Expect(t.Uint8()).To(Equal(x))
 			}
-
-			// other type
+		})
+		Specify("from ptr kind", func() {
+			x := uint8(1)
+			t := New(&x)
+			Expect(t.Uint8()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
 			st := New("test")
 			ExpectErr(st.Uint8()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Uint16", func() {
+	})
+	Context("with Uint16()", func() {
+		Specify("from uint16 kind", func() {
 			x := uint16(12)
 			ts := []*Table{
 				New(uint8(x)),
@@ -69,12 +84,19 @@ var _ = Describe("Table", func() {
 			for _, t := range ts {
 				Expect(t.Uint16()).To(Equal(x))
 			}
-
-			// other type
+		})
+		Specify("from ptr kind", func() {
+			x := uint16(12)
+			t := New(&x)
+			Expect(t.Uint16()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
 			st := New("test")
 			ExpectErr(st.Uint16()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Uint32", func() {
+	})
+	Context("with Uint32()", func() {
+		Specify("from uint32 kind", func() {
 			x := uint32(12)
 			ts := []*Table{
 				New(uint8(x)),
@@ -91,12 +113,19 @@ var _ = Describe("Table", func() {
 			} else {
 				ExpectErr(ut.Uint32()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 			}
-
-			// other type
+		})
+		Specify("from ptr kind", func() {
+			x := uint32(12)
+			t := New(&x)
+			Expect(t.Uint32()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
 			st := New("test")
 			ExpectErr(st.Uint32()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Uint64", func() {
+	})
+	Context("with Uint64()", func() {
+		Specify("from uint* kind", func() {
 			x := uint64(12)
 			ts := []*Table{
 				New(uint(x)),
@@ -108,14 +137,19 @@ var _ = Describe("Table", func() {
 			for _, t := range ts {
 				Expect(t.Uint64()).To(Equal(x))
 			}
-
-			// other type
+		})
+		Specify("from ptr kind", func() {
+			x := uint64(12)
+			t := New(&x)
+			Expect(t.Uint64()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
 			st := New("test")
 			ExpectErr(st.Uint64()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
-	When("int type", func() {
-		Specify("Int", func() {
+	Context("with Int()", func() {
+		Specify("from int, int8, int16, int32, int64, uint8, uint16, uint32 kind", func() {
 			x := 12
 			ts := []*Table{
 				New(int(x)),
@@ -142,20 +176,34 @@ var _ = Describe("Table", func() {
 			} else {
 				ExpectErr(ut32.Int()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 			}
-
-			// other type
-			st := New("test")
-			ExpectErr(st.Int()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Int8", func() {
+		Specify("from ptr kind", func() {
+			x := int(12)
+			t := New(&x)
+			Expect(t.Int()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.Int()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+	})
+	Context("with Int8()", func() {
+		Specify("from int8 kind", func() {
 			t8 := New(int8(12))
 			Expect(t8.Int8()).To(Equal(int8(12)))
-
-			// other type
-			ts := New("test")
-			ExpectErr(ts.Int8()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Int16", func() {
+		Specify("from ptr kind", func() {
+			x := int8(12)
+			t := New(&x)
+			Expect(t.Int8()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
+			s := New("test")
+			ExpectErr(s.Int8()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+	})
+	Context("with Int16()", func() {
+		Specify("from int8, int16, uint8 kind", func() {
 			x := int16(12)
 			ts := []*Table{
 				New(int8(x)),
@@ -165,12 +213,19 @@ var _ = Describe("Table", func() {
 			for _, t := range ts {
 				Expect(t.Int16()).To(Equal(x))
 			}
-
-			// other type
-			st := New("test")
-			ExpectErr(st.Int16()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Int32", func() {
+		Specify("from ptr kind", func() {
+			x := int16(12)
+			t := New(&x)
+			Expect(t.Int16()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.Int16()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+	})
+	Context("with Int32()", func() {
+		Specify("from int, int{8,16,32}, uint{8, 16}", func() {
 			x := int32(12)
 			ts := []*Table{
 				New(int8(x)),
@@ -189,12 +244,19 @@ var _ = Describe("Table", func() {
 			} else {
 				ExpectErr(t.Int32()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 			}
-
-			// other type
+		})
+		Specify("from ptr kind", func() {
+			x := int32(12)
+			t := New(&x)
+			Expect(t.Int32()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
 			st := New("test")
 			ExpectErr(st.Int32()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Int64", func() {
+	})
+	Context("with Int64()", func() {
+		Specify("from int, int{8,16,32,64}, uint, uint{8, 16, 32}", func() {
 			x := int64(12)
 			ts := []*Table{
 				New(int(x)),
@@ -216,14 +278,19 @@ var _ = Describe("Table", func() {
 			} else {
 				ExpectErr(ut.Int64()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 			}
-
-			// other type
-			st := New("test")
-			ExpectErr(st.Int64()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+		Specify("from ptr kind", func() {
+			x := int64(12)
+			t := New(&x)
+			Expect(t.Int64()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.Int64()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
-	When("float type", func() {
-		Specify("Float32", func() {
+	Context("with Float32()", func() {
+		Specify("from int*, uint*, float32 kind", func() {
 			x := float32(12)
 			ts := []*Table{
 				New(x),
@@ -241,12 +308,19 @@ var _ = Describe("Table", func() {
 			for _, t := range ts {
 				Expect(t.Float32()).To(Equal(x))
 			}
-
-			// other type
+		})
+		Specify("from ptr kind", func() {
+			x := float32(12)
+			t := New(&x)
+			Expect(t.Float32()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
 			st := New("test")
 			ExpectErr(st.Float32()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Float64", func() {
+	})
+	Context("with Float64()", func() {
+		Specify("from int*, uint*, float* kind", func() {
 			x := float64(12)
 			ts := []*Table{
 				New(x),
@@ -265,14 +339,19 @@ var _ = Describe("Table", func() {
 			for _, t := range ts {
 				Expect(t.Float64()).To(Equal(x))
 			}
-
-			// other type
+		})
+		Specify("from ptr kind", func() {
+			x := float64(12)
+			t := New(&x)
+			Expect(t.Float64()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
 			st := New("test")
 			ExpectErr(st.Float64()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
-	When("complex type", func() {
-		Specify("Complex64", func() {
+	Context("with Complex64()", func() {
+		Specify("from int*, uint*, float*, complex64 kind", func() {
 			c := complex(float32(12), float32(13))
 			r := 12
 			ts := []*Table{
@@ -293,12 +372,19 @@ var _ = Describe("Table", func() {
 			}
 			tc := New(c)
 			Expect(tc.Complex64()).To(Equal(c))
-
-			// other type
+		})
+		Specify("from ptr kind", func() {
+			x := complex(float32(12), float32(13))
+			t := New(&x)
+			Expect(t.Complex64()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
 			st := New("test")
 			ExpectErr(st.Complex64()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
-		Specify("Complex128", func() {
+	})
+	Context("with Complex128()", func() {
+		Specify("from int*, uint*, float*, complex* kind", func() {
 			c := complex(float64(12), float64(13))
 			r := 12
 			ts := []*Table{
@@ -321,90 +407,22 @@ var _ = Describe("Table", func() {
 			tc := New(c)
 			Expect(tc.Complex128()).To(Equal(c))
 
-			// other type
+			c32 := complex(float32(12), float32(13))
+			tc32 := New(c32)
+			Expect(tc32.Complex128()).To(Equal(c))
+		})
+		Specify("from ptr kind", func() {
+			x := complex(float64(12), float64(13))
+			t := New(&x)
+			Expect(t.Complex128()).Should(Equal(x))
+		})
+		Specify("from other kind", func() {
 			st := New("test")
 			ExpectErr(st.Complex128()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
-	When("pack type", func() {
-		Specify("Map", func() {
-			m := map[int]int{
-				1: 1,
-				2: 2,
-			}
-			t := New(m)
-			tm, err := t.Map()
-			Expect(err).Should(BeNil())
-			for tk, tv := range tm {
-				Expect(m[tk.MustInt()]).Should(Equal(tv.MustInt()))
-			}
-
-			s := []int{1, 2}
-			t = New(s)
-			tm, err = t.Map()
-			Expect(err).Should(BeNil())
-			for tk, tv := range tm {
-				Expect(s[tk.MustInt()]).Should(Equal(tv.MustInt()))
-			}
-
-			ss := struct {
-				A, B int
-			}{
-				A: 1,
-				B: 2,
-			}
-			t = New(ss)
-			tm, err = t.Map()
-			Expect(err).Should(BeNil())
-			for tk, tv := range tm {
-				switch tk.String() {
-				case "A":
-					Expect(tv.Int()).Should(Equal(ss.A))
-				case "B":
-					Expect(tv.Int()).Should(Equal(ss.B))
-				default:
-					Expect(tk.String()).Should(BeEmpty())
-				}
-			}
-
-			// other type
-			st := New("test")
-			ExpectErr(st.Map()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
-		})
-		Specify("Slice", func() {
-			s := []int{1, 2}
-			t := New(s)
-			ts, err := t.Slice()
-			Expect(err).Should(BeNil())
-			for idx, tv := range ts {
-				Expect(tv.MustInt()).Should(Equal(s[idx]))
-			}
-
-			ss := struct {
-				A, B int
-			}{
-				A: 1,
-				B: 2,
-			}
-			t = New(ss)
-			ts, err = t.Slice()
-			Expect(err).Should(BeNil())
-			for idx, tv := range ts {
-				switch idx {
-				case 0:
-					Expect(tv.MustInt()).Should(Equal(ss.A))
-				case 1:
-					Expect(tv.MustInt()).Should(Equal(ss.B))
-				default:
-					Expect(idx).Should(BeNumerically("<", 2))
-				}
-			}
-
-			// other type
-			st := New("test")
-			ExpectErr(st.Slice()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
-		})
-		Specify("Get", func() {
+	Context("with Get()", func() {
+		Specify("from map kind", func() {
 			m := map[int]int{
 				1: 1,
 				2: 2,
@@ -414,46 +432,110 @@ var _ = Describe("Table", func() {
 				Expect(t.MustGet(k).Int()).Should(Equal(v))
 			}
 			Expect(t.MustGet(3)).Should(BeNil())
-
+		})
+		Specify("from slice kind", func() {
 			s := []int{1, 2}
-			t = New(s)
+			t := New(s)
 			for idx, elem := range s {
 				Expect(t.MustGet(idx).Int()).Should(Equal(elem))
 			}
 			Expect(t.MustGet(3)).Should(BeNil())
-
+		})
+		Specify("from array kind", func() {
+			s := [3]int{1, 2}
+			t := New(s)
+			for idx, elem := range s {
+				Expect(t.MustGet(idx).Int()).Should(Equal(elem))
+			}
+			Expect(t.MustGet(4)).Should(BeNil())
+		})
+		Specify("from struct kind", func() {
 			ss := struct {
 				A, B int
 			}{
 				A: 1,
 				B: 2,
 			}
-			t = New(ss)
+			t := New(ss)
 			Expect(t.MustGet("A").Int()).Should(Equal(ss.A))
 			Expect(t.MustGet("B").Int()).Should(Equal(ss.B))
 			Expect(t.MustGet("C")).Should(BeNil())
-
-			// other type
-			st := New("test")
-			ExpectErr(st.Get("X")).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+		Specify("from ptr kind", func() {
+			s := []int{1}
+			t := New(&s)
+			Expect(t.MustGet(0).Int()).Should(Equal(1))
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.Get("x")).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
-	When("each", func() {
-		Specify("EachDo on map", func() {
+	Context("with Map()", func() {
+		Specify("from map kind", func() {
 			m := map[int]int{
 				1: 1,
 				2: 2,
 			}
-			t := New(m)
-			t.EachDo(func(k, v *Table) error {
-				Expect(m[k.MustInt()]).Should(Equal(v.MustInt()))
-				return nil
-			})
+			tm := New(m).MustMap()
+			Expect(len(tm)).Should(Equal(len(m)))
+			for tk, tv := range tm {
+				Expect(tv.Int()).Should(Equal(m[tk.MustInt()]))
+			}
+		})
+		Specify("from slice kind", func() {
+			s := []int{1, 2}
+			tm := New(s).MustMap()
+			Expect(len(tm)).Should(Equal(len(s)))
+			for idx, elem := range tm {
+				Expect(elem.Int()).Should(Equal(s[idx.MustInt()]))
+			}
+		})
+		Specify("from array kind", func() {
+			s := [3]int{1, 2}
+			tm := New(s).MustMap()
+			for idx, elem := range tm {
+				Expect(elem.Int()).Should(Equal(s[idx.MustInt()]))
+			}
+		})
+		Specify("from struct kind", func() {
+			ss := struct {
+				A, B int
+			}{
+				A: 1,
+				B: 2,
+			}
+			tm := New(ss).MustMap()
+			Expect(len(tm)).Should(Equal(2))
+			for tk, tv := range tm {
+				switch tk.String() {
+				case "A":
+					Expect(tv.Int()).Should(Equal(ss.A))
+				case "B":
+					Expect(tv.Int()).Should(Equal(ss.B))
+				default: // must error
+					Expect(tv.Int()).Should(BeNil())
+				}
+			}
+		})
+		Specify("from ptr kind", func() {
+			s := []int{1, 2}
+			tm := New(&s).MustMap()
+			Expect(len(tm)).Should(Equal(len(s)))
+			for idx, elem := range tm {
+				Expect(elem.Int()).Should(Equal(s[idx.MustInt()]))
+			}
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.Map()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
+})
 
-	When("set", func() {
-		Specify("set", func() {
+var _ = Describe("Sets", func() {
+	Context("with Set()", func() {
+		Specify("from int kind", func() {
 			m := 123
 			t := New(&m)
 			err := t.Set(2)
@@ -466,17 +548,173 @@ var _ = Describe("Table", func() {
 			err = t.Set(&n)
 			Expect(err).Should(BeNil())
 			Expect(t.Int()).Should(Equal(456))
-
+		})
+		Specify("from int kind", func() {
 			ss := struct {
 				A, B int
 			}{
 				A: 1,
 				B: 2,
 			}
-			t = New(&ss)
-			err = t.MustGet("A").Set(123)
+			t := New(&ss)
+			err := t.MustGet("A").Set(123)
 			Expect(err).Should(BeNil())
 			Expect(t.MustGet("A").Int()).Should(Equal(123))
 		})
+	})
+})
+
+var _ = Describe("Dos", func() {
+	Context("with EachDo()", func() {
+		Specify("in map", func() {
+			m := map[int]int{
+				1: 1,
+				2: 2,
+			}
+			t := New(m)
+			t.EachDo(func(k, v *Table) error {
+				Expect(m[k.MustInt()]).Should(Equal(v.MustInt()))
+				return nil
+			})
+		})
+	})
+})
+
+var _ = Describe("Unmarshal", func() {
+	Specify("from bool kind", func() {
+		x := true
+		var y bool
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		Expect(y).Should(Equal(x))
+	})
+	Specify("from int kind", func() {
+		x := 123
+		var y int
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		Expect(y).Should(Equal(x))
+	})
+	Specify("from uint kind", func() {
+		x := uint(123)
+		y := uint(0)
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		Expect(y).Should(Equal(uint(x)))
+	})
+	Specify("from float kind", func() {
+		x := 123.4
+		y := 0.0
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		Expect(y).Should(Equal(x))
+	})
+	Specify("from complex kind", func() {
+		x := 1i + 2
+		y := 0i + 0
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		Expect(y).Should(Equal(x))
+	})
+	Specify("from string kind", func() {
+		x := "abc"
+		y := ""
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		Expect(y).Should(Equal(x))
+	})
+	Specify("from slice kind", func() {
+		x := []interface{}{
+			1, "a", 0.1,
+		}
+
+		y := make([]interface{}, 0)
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		Expect(len(y)).Should(Equal(len(x)))
+		for i, e := range y {
+			Expect(e).Should(Equal(x[i]))
+		}
+	})
+	Specify("from array kind", func() {
+		x := [3]int{1, 2, 3}
+		var y [3]int
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		for i, v := range x {
+			fmt.Fprintf(GinkgoWriter, "%d, %v", i, y[i])
+			Expect(y[i]).Should(Equal(v))
+		}
+	})
+	Specify("from map kind", func() {
+		x := map[string]interface{}{
+			"A": 1,
+			"B": "a",
+			"C": []int{1, 2, 3},
+		}
+
+		y := make(map[string]interface{})
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		for k, v := range x {
+			fmt.Fprintf(GinkgoWriter, "%s, %v", k, y[k])
+			Expect(y[k]).Should(Equal(v))
+		}
+	})
+	Specify("to struct kind", func() {
+		type stype struct {
+			A int    `table:"a"`
+			B string `table:"_"`
+			C string
+		}
+		var y stype
+
+		x := map[string]interface{}{
+			"a": 1,
+			"A": 11,
+
+			"B": "b",
+			"b": "bb",
+
+			"C": "c",
+			"c": "cc",
+		}
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).Should(BeNil())
+		Expect(y.A).Should(Equal(1))
+		Expect(y.B).Should(Equal(""))
+		Expect(y.C).Should(Equal("c"))
+		fmt.Fprint(GinkgoWriter, y.A)
+	})
+	Specify("to chan kind", func() {
+		x := map[string]interface{}{
+			"A": 1,
+			"B": "a",
+		}
+		var y chan int
+
+		tx := New(x)
+		err := tx.Unmarshal(&y)
+		Expect(err).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 	})
 })
