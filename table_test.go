@@ -580,13 +580,13 @@ var _ = Describe("Dos", func() {
 	})
 })
 
-var _ = Describe("Unmarshal", func() {
+var _ = Describe("Conv", func() {
 	Specify("from bool kind", func() {
 		x := true
 		var y bool
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
@@ -595,7 +595,7 @@ var _ = Describe("Unmarshal", func() {
 		var y int
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
@@ -604,7 +604,7 @@ var _ = Describe("Unmarshal", func() {
 		y := uint(0)
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(uint(x)))
 	})
@@ -613,7 +613,7 @@ var _ = Describe("Unmarshal", func() {
 		y := 0.0
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
@@ -622,7 +622,7 @@ var _ = Describe("Unmarshal", func() {
 		y := 0i + 0
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
@@ -631,7 +631,7 @@ var _ = Describe("Unmarshal", func() {
 		y := ""
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
@@ -643,7 +643,7 @@ var _ = Describe("Unmarshal", func() {
 		y := make([]interface{}, 0)
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		Expect(len(y)).Should(Equal(len(x)))
 		for i, e := range y {
@@ -655,7 +655,7 @@ var _ = Describe("Unmarshal", func() {
 		var y [3]int
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		for i, v := range x {
 			fmt.Fprintf(GinkgoWriter, "%d, %v", i, y[i])
@@ -672,7 +672,7 @@ var _ = Describe("Unmarshal", func() {
 		y := make(map[string]interface{})
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		for k, v := range x {
 			fmt.Fprintf(GinkgoWriter, "%s, %v", k, y[k])
@@ -699,7 +699,7 @@ var _ = Describe("Unmarshal", func() {
 		}
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).Should(BeNil())
 		Expect(y.A).Should(Equal(1))
 		Expect(y.B).Should(Equal(""))
@@ -714,7 +714,7 @@ var _ = Describe("Unmarshal", func() {
 		var y chan int
 
 		tx := New(x)
-		err := tx.Unmarshal(&y)
+		err := tx.Conv(&y)
 		Expect(err).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 	})
 })

@@ -28,67 +28,67 @@ var (
 	}
 )
 
-// Unmarshal ...
-func (t *Table) Unmarshal(value interface{}) error {
+// Conv ...
+func (t *Table) Conv(value interface{}) error {
 	v := reflect.ValueOf(value)
 	if v.Kind() != reflect.Ptr {
-		return &ErrUnsupportedKind{"Table.Unmarshal", v.Kind()}
+		return &ErrUnsupportedKind{"Table.Conv", v.Kind()}
 	}
 	v = v.Elem()
-	return t.unmarshal(v)
+	return t.conv(v)
 }
 
-func (t *Table) unmarshal(v reflect.Value) (err error) {
+func (t *Table) conv(v reflect.Value) (err error) {
 	switch v.Kind() {
 	case reflect.Bool:
-		return t.unmarshalBool(v)
+		return t.convBool(v)
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return t.unmarshalInt(v)
+		return t.convInt(v)
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return t.unmarshalUint(v)
+		return t.convUint(v)
 
 	case reflect.Float32, reflect.Float64:
-		return t.unmarshalFloat(v)
+		return t.convFloat(v)
 
 	case reflect.Complex64, reflect.Complex128:
-		return t.unmarshalComplex(v)
+		return t.convComplex(v)
 
 	case reflect.String:
-		return t.unmarshalString(v)
+		return t.convString(v)
 
 	case reflect.Map:
-		return t.unmarshalMap(v)
+		return t.convMap(v)
 
 	case reflect.Array:
-		return t.unmarshalArray(v)
+		return t.convArray(v)
 
 	case reflect.Slice:
-		return t.unmarshalSlice(v)
+		return t.convSlice(v)
 
 	case reflect.Struct:
-		return t.unmarshalStruct(v)
+		return t.convStruct(v)
 
 	case reflect.Interface:
-		return t.unmarshalInterface(v)
+		return t.convInterface(v)
 
 	default:
-		return &ErrUnsupportedKind{"Table.unmarshal", v.Kind()}
+		return &ErrUnsupportedKind{"Table.conv", v.Kind()}
 	}
 }
 
-func (t *Table) unmarshalInterface(v reflect.Value) error {
+func (t *Table) convInterface(v reflect.Value) error {
 	v.Set(t.getv())
 	return nil
 }
 
-func (t *Table) unmarshalBool(v reflect.Value) error {
+func (t *Table) convBool(v reflect.Value) error {
 	v.SetBool(t.bool())
 	return nil
 }
 
-func (t *Table) unmarshalInt(v reflect.Value) error {
+func (t *Table) convInt(v reflect.Value) error {
 	tk := t.getv().Kind()
 	vk0 := v.Kind()
 	vk := reflect.Invalid
@@ -106,7 +106,7 @@ func (t *Table) unmarshalInt(v reflect.Value) error {
 
 	if intLevel[vk] < intLevel[tk] {
 		return &ErrTypeUnequal{
-			"Table.unmarshalInt",
+			"Table.convInt",
 			vk,
 			tk,
 		}
@@ -116,7 +116,7 @@ func (t *Table) unmarshalInt(v reflect.Value) error {
 	return nil
 }
 
-func (t *Table) unmarshalUint(v reflect.Value) error {
+func (t *Table) convUint(v reflect.Value) error {
 	tk := t.getv().Kind()
 	vk0 := v.Kind()
 	vk := reflect.Invalid
@@ -134,7 +134,7 @@ func (t *Table) unmarshalUint(v reflect.Value) error {
 
 	if uintLevel[vk] < uintLevel[tk] {
 		return &ErrTypeUnequal{
-			"Table.unmarshalUint",
+			"Table.convUint",
 			vk,
 			tk,
 		}
@@ -144,13 +144,13 @@ func (t *Table) unmarshalUint(v reflect.Value) error {
 	return nil
 }
 
-func (t *Table) unmarshalFloat(v reflect.Value) error {
+func (t *Table) convFloat(v reflect.Value) error {
 	tk := t.getv().Kind()
 	vk := v.Kind()
 
 	if floatLevel[vk] < floatLevel[tk] {
 		return &ErrTypeUnequal{
-			"Table.unmarshalFloat",
+			"Table.convFloat",
 			tk,
 			vk,
 		}
@@ -160,13 +160,13 @@ func (t *Table) unmarshalFloat(v reflect.Value) error {
 	return nil
 }
 
-func (t *Table) unmarshalComplex(v reflect.Value) error {
+func (t *Table) convComplex(v reflect.Value) error {
 	tk := t.getv().Kind()
 	vk := v.Kind()
 
 	if complexLevel[vk] < complexLevel[tk] {
 		return &ErrTypeUnequal{
-			"Table.unmarshalComplex",
+			"Table.convComplex",
 			tk,
 			vk,
 		}
@@ -176,12 +176,12 @@ func (t *Table) unmarshalComplex(v reflect.Value) error {
 	return nil
 }
 
-func (t *Table) unmarshalString(v reflect.Value) error {
+func (t *Table) convString(v reflect.Value) error {
 	v.SetString(t.string())
 	return nil
 }
 
-func (t *Table) unmarshalMap(m reflect.Value) error {
+func (t *Table) convMap(m reflect.Value) error {
 	tm, err := t.Map()
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func (t *Table) unmarshalMap(m reflect.Value) error {
 			mv = mv.Elem()
 		}
 
-		if err := v.unmarshal(mv); err != nil {
+		if err := v.conv(mv); err != nil {
 			return err
 		}
 		m.SetMapIndex(mk, mv)
@@ -203,7 +203,7 @@ func (t *Table) unmarshalMap(m reflect.Value) error {
 	return nil
 }
 
-func (t *Table) unmarshalArray(a reflect.Value) error {
+func (t *Table) convArray(a reflect.Value) error {
 	ts, err := t.Slice()
 	if err != nil {
 		return err
@@ -216,14 +216,14 @@ func (t *Table) unmarshalArray(a reflect.Value) error {
 
 		ev := a.Index(i)
 
-		if err := v.unmarshal(ev); err != nil {
+		if err := v.conv(ev); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (t *Table) unmarshalSlice(s reflect.Value) error {
+func (t *Table) convSlice(s reflect.Value) error {
 	ts, err := t.Slice()
 	if err != nil {
 		return err
@@ -241,14 +241,14 @@ func (t *Table) unmarshalSlice(s reflect.Value) error {
 			ev = newSlice.Index(i)
 		}
 
-		if err := v.unmarshal(ev); err != nil {
+		if err := v.conv(ev); err != nil {
 			return err
 		}
 	}
 	s.Set(newSlice)
 	return nil
 }
-func (t *Table) unmarshalStruct(s reflect.Value) error {
+func (t *Table) convStruct(s reflect.Value) error {
 	tm, err := t.Map()
 	if err != nil {
 		return err
@@ -279,7 +279,7 @@ func (t *Table) unmarshalStruct(s reflect.Value) error {
 		if f.Kind() == reflect.Invalid {
 			continue
 		}
-		if err := v.unmarshal(f); err != nil {
+		if err := v.conv(f); err != nil {
 			return err
 		}
 		passedFnames[fn] = true
