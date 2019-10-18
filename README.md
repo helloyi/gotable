@@ -82,6 +82,44 @@ func main() {
 }
 ```
 
+Convert to struct
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/helloyi/gotable"
+)
+
+
+func main() {
+	x := map[string]interface{}{
+		"a": 1,
+		"A": 11,
+
+		"B": "b",
+		"b": "bb",
+
+		"C": "c",
+		"c": "cc",
+	}
+
+	var y struct {
+		A int    `table:"a"` // set with name "a"
+		B string `table:"_"` // passed
+		C string // set with name "C"
+	}
+
+	t := table.New(x)
+	if err := t.Conv(&y); err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Printf("%+v\n", y)
+}
+```
+
 Set map key:
 ```go
 package main
