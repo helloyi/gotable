@@ -1,4 +1,4 @@
-module github.com/helloyi/table
+module github.com/helloyi/gotable
 
 go 1.12
 
