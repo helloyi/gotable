@@ -63,3 +63,11 @@ func (t *Table) MustGet(k interface{}) *Table {
 	}
 	return val
 }
+
+func (t *Table) MustMap() map[*Table]*Table {
+	tm, err := t.Map()
+	if err != nil {
+		panic(err)
+	}
+	return tm
+}
