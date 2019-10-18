@@ -1,8 +1,8 @@
-module gotable
+module github.com/helloyi/table
 
 go 1.12
 
 require (
-	github.com/onsi/ginkgo v1.8.0
-	github.com/onsi/gomega v1.5.0
+	github.com/onsi/ginkgo v1.10.2
+	github.com/onsi/gomega v1.7.0
 )
