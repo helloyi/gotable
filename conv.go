@@ -3,6 +3,12 @@ package table
 import (
 	"math/bits"
 	"reflect"
+	"time"
+)
+
+var (
+	// TimeLayout default time layout
+	TimeLayout = "Mon Jan 2 15:04:05 -0700 MST 2006"
 )
 
 var (
@@ -39,6 +45,13 @@ func (t *Table) Conv(value interface{}) error {
 }
 
 func (t *Table) conv(v reflect.Value) (err error) {
+	switch v.Type().String() {
+	case "time.Duration":
+		return t.convTimeDuration(v)
+	case "time.Time":
+		return t.convTime(v)
+	}
+
 	switch v.Kind() {
 	case reflect.Bool:
 		return t.convBool(v)
@@ -73,9 +86,43 @@ func (t *Table) conv(v reflect.Value) (err error) {
 	case reflect.Interface:
 		return t.convInterface(v)
 
+	case reflect.Ptr:
+		return t.convPtr(v)
+
 	default:
 		return &ErrUnsupportedKind{"Table.conv", v.Kind()}
 	}
+}
+
+func (t *Table) convTimeDuration(v reflect.Value) error {
+	td, err := time.ParseDuration(t.String())
+	if err != nil {
+		return err
+	}
+	v.SetInt(int64(td))
+	return nil
+}
+
+func (t *Table) convTime(v reflect.Value) error {
+	timex, err := time.Parse(TimeLayout, t.String())
+	if err != nil {
+		return err
+	}
+	v.Set(reflect.ValueOf(timex))
+	return nil
+}
+
+func (t *Table) convPtr(v reflect.Value) error {
+	rv := v
+	if v.IsNil() {
+		rv = reflect.New(v.Type().Elem())
+	}
+	if err := t.conv(rv.Elem()); err != nil {
+		return err
+	}
+	v.Set(rv)
+
+	return nil
 }
 
 func (t *Table) convInterface(v reflect.Value) error {
