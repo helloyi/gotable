@@ -34,68 +34,72 @@ var (
 	}
 )
 
-// Conv ...
-func (t *Table) Conv(value interface{}) error {
+// ConvTo convToert t to value
+func (t *Table) ConvTo(value interface{}) error {
 	v := reflect.ValueOf(value)
 	if v.Kind() != reflect.Ptr {
-		return &ErrUnsupportedKind{"Table.Conv", v.Kind()}
+		return &ErrUnsupportedKind{"Table.ConvTo", v.Kind()}
 	}
 	v = v.Elem()
-	return t.conv(v)
+	return t.convTo(v)
 }
 
-func (t *Table) conv(v reflect.Value) (err error) {
+func (t *Table) convTo(v reflect.Value) (err error) {
 	switch v.Type().String() {
 	case "time.Duration":
-		return t.convTimeDuration(v)
+		return t.convToTimeDuration(v)
 	case "time.Time":
-		return t.convTime(v)
+		return t.convToTime(v)
 	}
 
 	switch v.Kind() {
 	case reflect.Bool:
-		return t.convBool(v)
+		return t.convToBool(v)
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return t.convInt(v)
+		return t.convToInt(v)
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return t.convUint(v)
+		return t.convToUint(v)
 
 	case reflect.Float32, reflect.Float64:
-		return t.convFloat(v)
+		return t.convToFloat(v)
 
 	case reflect.Complex64, reflect.Complex128:
-		return t.convComplex(v)
+		return t.convToComplex(v)
 
 	case reflect.String:
-		return t.convString(v)
+		return t.convToString(v)
 
 	case reflect.Map:
-		return t.convMap(v)
+		return t.convToMap(v)
 
 	case reflect.Array:
-		return t.convArray(v)
+		return t.convToArray(v)
 
 	case reflect.Slice:
-		return t.convSlice(v)
+		return t.convToSlice(v)
 
 	case reflect.Struct:
-		return t.convStruct(v)
+		return t.convToStruct(v)
 
 	case reflect.Interface:
-		return t.convInterface(v)
+		return t.convToInterface(v)
 
 	case reflect.Ptr:
-		return t.convPtr(v)
+		return t.convToPtr(v)
 
 	default:
-		return &ErrUnsupportedKind{"Table.conv", v.Kind()}
+		return &ErrUnsupportedKind{"Table.convTo", v.Kind()}
 	}
 }
 
-func (t *Table) convTimeDuration(v reflect.Value) error {
-	td, err := time.ParseDuration(t.String())
+func (t *Table) convToTimeDuration(v reflect.Value) error {
+	s, err := t.String()
+	if err != nil {
+		return err
+	}
+	td, err := time.ParseDuration(s)
 	if err != nil {
 		return err
 	}
@@ -103,8 +107,12 @@ func (t *Table) convTimeDuration(v reflect.Value) error {
 	return nil
 }
 
-func (t *Table) convTime(v reflect.Value) error {
-	timex, err := time.Parse(TimeLayout, t.String())
+func (t *Table) convToTime(v reflect.Value) error {
+	s, err := t.String()
+	if err != nil {
+		return err
+	}
+	timex, err := time.Parse(TimeLayout, s)
 	if err != nil {
 		return err
 	}
@@ -112,12 +120,12 @@ func (t *Table) convTime(v reflect.Value) error {
 	return nil
 }
 
-func (t *Table) convPtr(v reflect.Value) error {
+func (t *Table) convToPtr(v reflect.Value) error {
 	rv := v
 	if v.IsNil() {
 		rv = reflect.New(v.Type().Elem())
 	}
-	if err := t.conv(rv.Elem()); err != nil {
+	if err := t.convTo(rv.Elem()); err != nil {
 		return err
 	}
 	v.Set(rv)
@@ -125,22 +133,27 @@ func (t *Table) convPtr(v reflect.Value) error {
 	return nil
 }
 
-func (t *Table) convInterface(v reflect.Value) error {
+func (t *Table) convToInterface(v reflect.Value) error {
 	v.Set(t.getv())
 	return nil
 }
 
-func (t *Table) convBool(v reflect.Value) error {
-	v.SetBool(t.bool())
+func (t *Table) convToBool(v reflect.Value) error {
+	b, err := t.Bool()
+	if err != nil {
+		return err
+	}
+
+	v.SetBool(b)
 	return nil
 }
 
-func (t *Table) convInt(v reflect.Value) error {
+func (t *Table) convToInt(v reflect.Value) error {
 	tk := t.getv().Kind()
 	vk0 := v.Kind()
 	vk := reflect.Invalid
 
-	if vk0 == reflect.Int { // convert Int to Int32 or Int64
+	if vk0 == reflect.Int { // convToert Int to Int32 or Int64
 		if bits.UintSize == 32 {
 			vk = reflect.Int32
 		}
@@ -151,24 +164,28 @@ func (t *Table) convInt(v reflect.Value) error {
 		vk = vk0
 	}
 
+	iv, err := t.Int64()
+	if err != nil {
+		return err
+	}
 	if intLevel[vk] < intLevel[tk] {
 		return &ErrTypeUnequal{
-			"Table.convInt",
+			"Table.convToInt",
 			vk,
 			tk,
 		}
 	}
 
-	v.SetInt(t.int())
+	v.SetInt(iv)
 	return nil
 }
 
-func (t *Table) convUint(v reflect.Value) error {
+func (t *Table) convToUint(v reflect.Value) error {
 	tk := t.getv().Kind()
 	vk0 := v.Kind()
 	vk := reflect.Invalid
 
-	if vk0 == reflect.Uint { // convert Uint to Uint32 or Uint64
+	if vk0 == reflect.Uint { // convToert Uint to Uint32 or Uint64
 		if bits.UintSize == 32 {
 			vk = reflect.Uint32
 		}
@@ -179,61 +196,80 @@ func (t *Table) convUint(v reflect.Value) error {
 		vk = vk0
 	}
 
+	uv, err := t.Uint64()
+	if err != nil {
+		return err
+	}
 	if uintLevel[vk] < uintLevel[tk] {
 		return &ErrTypeUnequal{
-			"Table.convUint",
+			"Table.convToUint",
 			vk,
 			tk,
 		}
 	}
 
-	v.SetUint(t.uint())
+	v.SetUint(uv)
 	return nil
 }
 
-func (t *Table) convFloat(v reflect.Value) error {
+func (t *Table) convToFloat(v reflect.Value) error {
 	tk := t.getv().Kind()
 	vk := v.Kind()
 
+	tf, err := t.Float64()
+	if err != nil {
+		return err
+	}
 	if floatLevel[vk] < floatLevel[tk] {
 		return &ErrTypeUnequal{
-			"Table.convFloat",
+			"Table.convToFloat",
 			tk,
 			vk,
 		}
 	}
 
-	v.SetFloat(t.float())
+	v.SetFloat(tf)
 	return nil
 }
 
-func (t *Table) convComplex(v reflect.Value) error {
+func (t *Table) convToComplex(v reflect.Value) error {
 	tk := t.getv().Kind()
 	vk := v.Kind()
 
+	tc, err := t.Complex128()
+	if err != nil {
+		return err
+	}
 	if complexLevel[vk] < complexLevel[tk] {
 		return &ErrTypeUnequal{
-			"Table.convComplex",
+			"Table.convToComplex",
 			tk,
 			vk,
 		}
 	}
 
-	v.SetComplex(t.complex_())
+	v.SetComplex(tc)
 	return nil
 }
 
-func (t *Table) convString(v reflect.Value) error {
-	v.SetString(t.string())
+func (t *Table) convToString(v reflect.Value) error {
+	ts, err := t.String()
+	if err != nil {
+		return err
+	}
+	v.SetString(ts)
 	return nil
 }
 
-func (t *Table) convMap(m reflect.Value) error {
+func (t *Table) convToMap(m reflect.Value) error {
 	tm, err := t.Map()
 	if err != nil {
 		return err
 	}
 
+	if m.IsNil() {
+		m.Set(reflect.MakeMap(m.Type()))
+	}
 	for k, v := range tm {
 		mk := k.getv()
 		mv := m.MapIndex(mk)
@@ -242,7 +278,7 @@ func (t *Table) convMap(m reflect.Value) error {
 			mv = mv.Elem()
 		}
 
-		if err := v.conv(mv); err != nil {
+		if err := v.convTo(mv); err != nil {
 			return err
 		}
 		m.SetMapIndex(mk, mv)
@@ -250,7 +286,7 @@ func (t *Table) convMap(m reflect.Value) error {
 	return nil
 }
 
-func (t *Table) convArray(a reflect.Value) error {
+func (t *Table) convToArray(a reflect.Value) error {
 	ts, err := t.Slice()
 	if err != nil {
 		return err
@@ -263,21 +299,23 @@ func (t *Table) convArray(a reflect.Value) error {
 
 		ev := a.Index(i)
 
-		if err := v.conv(ev); err != nil {
+		if err := v.convTo(ev); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (t *Table) convSlice(s reflect.Value) error {
+func (t *Table) convToSlice(s reflect.Value) error {
 	ts, err := t.Slice()
 	if err != nil {
 		return err
 	}
 
-	// l := s.Len()
 	newSlice := reflect.MakeSlice(s.Type(), len(ts), s.Len()+len(ts))
+	for i := 0; i < s.Len(); i++ {
+		newSlice = reflect.Append(newSlice, s.Index(i))
+	}
 	for i, v := range ts {
 		var ev reflect.Value
 		if i < newSlice.Len() {
@@ -288,14 +326,14 @@ func (t *Table) convSlice(s reflect.Value) error {
 			ev = newSlice.Index(i)
 		}
 
-		if err := v.conv(ev); err != nil {
+		if err := v.convTo(ev); err != nil {
 			return err
 		}
 	}
 	s.Set(newSlice)
 	return nil
 }
-func (t *Table) convStruct(s reflect.Value) error {
+func (t *Table) convToStruct(s reflect.Value) error {
 	tm, err := t.Map()
 	if err != nil {
 		return err
@@ -314,7 +352,10 @@ func (t *Table) convStruct(s reflect.Value) error {
 		}
 	}
 	for k, v := range tm {
-		key := k.String()
+		key, err := k.String()
+		if err != nil {
+			return err
+		}
 		if passedFnames[key] == true {
 			continue
 		}
@@ -326,7 +367,7 @@ func (t *Table) convStruct(s reflect.Value) error {
 		if f.Kind() == reflect.Invalid {
 			continue
 		}
-		if err := v.conv(f); err != nil {
+		if err := v.convTo(f); err != nil {
 			return err
 		}
 		passedFnames[fn] = true
