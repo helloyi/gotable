@@ -98,19 +98,22 @@ func (t *Table) Put(k, v interface{}) (err error) {
 	}
 }
 
-// TODO
 // Bytes returns t's underlying value as a []bytes.
 // It returns error if t's underlying value is not a slice of bytes.
 func (t *Table) Bytes() ([]byte, error) {
-	if t.getv().Kind() != reflect.Slice {
+	tv := t.getv()
+	switch tv.Kind() {
+	case reflect.Interface, reflect.Ptr:
+		return (&Table{v: indirect(tv)}).Bytes()
+	case reflect.Slice:
+		elemk := tv.Type().Elem().Kind()
+		if elemk != reflect.Uint8 {
+			return nil, &ErrUnsupportedKind{"Table.Bytes", "slice of " + elemk.String()}
+		}
+		return tv.Bytes(), nil
+	default:
 		return nil, &ErrUnsupportedKind{"Table.Bytes", t.getv().Kind()}
 	}
-	v := t.getv()
-	elemk := v.Type().Elem().Kind()
-	if elemk != reflect.Uint8 {
-		return nil, &ErrUnsupportedKind{"Table.Bytes", "slice of " + elemk.String()}
-	}
-	return v.Bytes(), nil
 }
 
 // Bool returns t's underlying value.
@@ -464,37 +467,40 @@ func (t *Table) Ptr() uintptr {
 	return t.getv().Pointer()
 }
 
-func (t *Table) String() string {
+func (t *Table) String() (string, error) {
 	switch t.getv().Kind() {
 	case reflect.Invalid:
-		return ""
+		return "", nil
 	case reflect.String:
-		return t.string()
+		return t.string(), nil
 	case reflect.Bool:
-		return fmt.Sprintf("%t", t.bool())
+		return fmt.Sprintf("%t", t.bool()), nil
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return fmt.Sprintf("%d", t.int())
+		return fmt.Sprintf("%d", t.int()), nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return fmt.Sprintf("%d", t.uint())
+		return fmt.Sprintf("%d", t.uint()), nil
 	case reflect.Float32, reflect.Float64:
-		return fmt.Sprintf("%g", t.float())
+		return fmt.Sprintf("%g", t.float()), nil
 	case reflect.Complex64, reflect.Complex128:
-		return fmt.Sprintf("%g", t.complex_())
+		return fmt.Sprintf("%g", t.complex_()), nil
 	case reflect.Chan:
-		return fmt.Sprintf("%p", t.getv().Interface())
+		return fmt.Sprintf("%p", t.getv().Interface()), nil
 	case reflect.UnsafePointer:
-		return fmt.Sprintf("%x", t.getv().Interface())
+		return fmt.Sprintf("%x", t.getv().Interface()), nil
 	case reflect.Struct:
-		return fmt.Sprintf("%#v", t.getv().Interface())
+		return fmt.Sprintf("%#v", t.getv().Interface()), nil
 	case reflect.Slice, reflect.Array, reflect.Map:
-		return fmt.Sprintf("%v", t.getv().Interface())
+		return fmt.Sprintf("%v", t.getv().Interface()), nil
+	case reflect.Interface, reflect.Ptr:
+		return (&Table{v: indirect(t.getv())}).String()
 	default:
-		return t.string()
+		return "", &ErrUnsupportedKind{"Table.String", t.getv().Kind()}
 	}
 }
 
 type eachDoFunc func(k, v *Table) error
 
+// EachDo ...
 func (t *Table) EachDo(f eachDoFunc) error {
 	switch t.getv().Kind() {
 	case reflect.Map, reflect.Array, reflect.Slice, reflect.Struct:
