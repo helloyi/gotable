@@ -9,7 +9,11 @@ env:
 go:
   - 1.12.x
   - 1.13.x
-  - master
+  - tip
+
+before_install:
+  - go get github.com/mattn/goveralls
 
 script:
-  - go test -v ./...
+  - go test -v -race -covermode=atomic -coverprofile=coverage.txt
+  - $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=travis-ci
