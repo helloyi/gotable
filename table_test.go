@@ -3,6 +3,7 @@ package table
 import (
 	"fmt"
 	"math/bits"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,9 +20,33 @@ var _ = Describe("Gets", func() {
 			t := New(b)
 			Expect(t.Bool()).To(Equal(b))
 		})
+		Specify("from bool ptr kind", func() {
+			b := true
+			t := New(&b)
+			Expect(t.Bool()).To(Equal(b))
+		})
 		Specify("from other kind", func() {
 			t := New("test")
 			ExpectErr(t.Bool()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+	})
+	Context("with Bytes()", func() {
+		Specify("from []byte type", func() {
+			x := []byte("abcd")
+			t := New(x)
+			Expect(t.Bytes()).To(Equal(x))
+		})
+		Specify("from []byte ptr type", func() {
+			x := []byte("abcd")
+			t := New(&x)
+			Expect(t.Bytes()).To(Equal(x))
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.Bytes()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+
+			t = New([]int{1, 2, 3})
+			ExpectErr(t.Bytes()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
 	Context("with Uint()", func() {
@@ -494,6 +519,7 @@ var _ = Describe("Gets", func() {
 		Specify("from array kind", func() {
 			s := [3]int{1, 2}
 			tm := New(s).MustMap()
+			Expect(len(tm)).Should(Equal(len(s)))
 			for idx, elem := range tm {
 				Expect(elem.Int()).Should(Equal(s[idx.MustInt()]))
 			}
@@ -508,7 +534,9 @@ var _ = Describe("Gets", func() {
 			tm := New(ss).MustMap()
 			Expect(len(tm)).Should(Equal(2))
 			for tk, tv := range tm {
-				switch tk.String() {
+				key, err := tk.String()
+				Expect(err).Should(BeNil())
+				switch key {
 				case "A":
 					Expect(tv.Int()).Should(Equal(ss.A))
 				case "B":
@@ -529,6 +557,168 @@ var _ = Describe("Gets", func() {
 		Specify("from other kind", func() {
 			t := New("test")
 			ExpectErr(t.Map()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+	})
+	Context("with Slice()", func() {
+		Specify("from slice kind", func() {
+			s := []int{1, 2}
+			ts := New(s).MustSlice()
+			Expect(len(ts)).Should(Equal(len(s)))
+			for idx, elem := range ts {
+				Expect(elem.Int()).Should(Equal(s[idx]))
+			}
+		})
+		Specify("from array kind", func() {
+			s := [3]int{1, 2}
+			ts := New(s).MustSlice()
+			Expect(len(ts)).Should(Equal(len(s)))
+			for idx, elem := range ts {
+				Expect(elem.Int()).Should(Equal(s[idx]))
+			}
+		})
+		Specify("from struct kind", func() {
+			ss := struct {
+				A, B int
+			}{
+				A: 1,
+				B: 2,
+			}
+			ts := New(ss).MustSlice()
+			Expect(len(ts)).Should(Equal(2))
+			Expect(ts[0].Int()).Should(Equal(ss.A))
+			Expect(ts[1].Int()).Should(Equal(ss.B))
+		})
+		Specify("from ptr kind", func() {
+			s := []int{1, 2}
+			ts := New(&s).MustSlice()
+			Expect(len(ts)).Should(Equal(len(s)))
+			for idx, elem := range ts {
+				Expect(elem.Int()).Should(Equal(s[idx]))
+			}
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.Slice()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+	})
+	Context("with AList()", func() {
+		Specify("from map kind", func() {
+			m := map[int]int{
+				1: 1,
+				2: 2,
+			}
+			tl := New(m).MustAList()
+			Expect(len(tl)).Should(Equal(len(m)))
+			for _, kv := range tl {
+				Expect(kv[1].Int() /* value */).Should(Equal(m[kv[0].MustInt() /* key */]))
+			}
+		})
+		Specify("from slice kind", func() {
+			s := []int{1, 2}
+			tl := New(s).MustAList()
+			Expect(len(tl)).Should(Equal(len(s)))
+			for _, kv := range tl {
+				Expect(kv[1].Int() /* value */).Should(Equal(s[kv[0].MustInt() /* idx */]))
+			}
+		})
+		Specify("from array kind", func() {
+			s := [3]int{1, 2}
+			tl := New(s).MustAList()
+			Expect(len(tl)).Should(Equal(len(s)))
+			for _, kv := range tl {
+				Expect(kv[1].Int() /* value */).Should(Equal(s[kv[0].MustInt() /* idx */]))
+			}
+		})
+		Specify("from struct kind", func() {
+			ss := struct {
+				A, B int
+			}{
+				A: 1,
+				B: 2,
+			}
+			tl := New(ss).MustAList()
+			Expect(len(tl)).Should(Equal(2))
+
+			Expect(tl[0][0].String() /* field name */).Should(Equal("A"))
+			Expect(tl[1][0].String() /* field name */).Should(Equal("B"))
+
+			Expect(tl[0][1].Int() /* value */).Should(Equal(ss.A))
+			Expect(tl[1][1].Int() /* value */).Should(Equal(ss.B))
+		})
+		Specify("from ptr kind", func() {
+			s := []int{1, 2}
+			tl := New(&s).MustAList()
+			Expect(len(tl)).Should(Equal(len(s)))
+			for _, kv := range tl {
+				Expect(kv[1].Int() /* value */).Should(Equal(s[kv[0].MustInt() /* idx */]))
+			}
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.AList()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+		})
+	})
+	Context("with PList()", func() {
+		Specify("from map kind", func() {
+			m := map[int]int{
+				1: 1,
+				2: 2,
+			}
+			tl := New(m).MustPList()
+			Expect(len(tl)).Should(Equal(2 * len(m)))
+			for i := 0; i < len(tl)/2; i += 2 {
+				k := tl[i]
+				v := tl[i+1]
+				Expect(v.Int()).Should(Equal(m[k.MustInt()]))
+			}
+		})
+		Specify("from slice kind", func() {
+			s := []int{1, 2}
+			tl := New(s).MustPList()
+			Expect(len(tl)).Should(Equal(2 * len(s)))
+			for i := 0; i < len(tl); i += 2 {
+				k := tl[i]
+				v := tl[i+1]
+				Expect(v.Int()).Should(Equal(s[k.MustInt()]))
+			}
+		})
+		Specify("from array kind", func() {
+			s := [3]int{1, 2}
+			tl := New(s).MustPList()
+			Expect(len(tl)).Should(Equal(2 * len(s)))
+			for i := 0; i < len(tl); i += 2 {
+				k := tl[i]
+				v := tl[i+1]
+				Expect(v.Int()).Should(Equal(s[k.MustInt()]))
+			}
+		})
+		Specify("from struct kind", func() {
+			ss := struct {
+				A, B int
+			}{
+				A: 1,
+				B: 2,
+			}
+			tl := New(ss).MustPList()
+			Expect(len(tl)).Should(Equal(2 * 2))
+			Expect(tl[0].String() /* field name */).Should(Equal("A"))
+			Expect(tl[1].Int() /* value */).Should(Equal(ss.A))
+			Expect(tl[2].String() /* field name */).Should(Equal("B"))
+			Expect(tl[3].Int() /* value */).Should(Equal(ss.B))
+		})
+		Specify("from ptr kind", func() {
+			s := []int{1, 2}
+			tl := New(&s).MustPList()
+			Expect(len(tl)).Should(Equal(2 * len(s)))
+			for i := 0; i < len(tl); i += 2 {
+				k := tl[i]
+				v := tl[i+1]
+				Expect(v.Int()).Should(Equal(s[k.MustInt()]))
+			}
+		})
+		Specify("from other kind", func() {
+			t := New("test")
+			ExpectErr(t.PList()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
 })
@@ -580,62 +770,70 @@ var _ = Describe("Dos", func() {
 	})
 })
 
-var _ = Describe("Conv", func() {
-	Specify("from bool kind", func() {
+var _ = Describe("ConvTo", func() {
+	Specify("not ptr kind", func() {
 		x := true
 		var y bool
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(y)
+		Expect(err).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+	})
+	Specify("bool kind", func() {
+		x := true
+		var y bool
+
+		tx := New(x)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
-	Specify("from int kind", func() {
+	Specify("int kind", func() {
 		x := 123
 		var y int
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
-	Specify("from uint kind", func() {
+	Specify("uint kind", func() {
 		x := uint(123)
 		y := uint(0)
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(uint(x)))
 	})
-	Specify("from float kind", func() {
+	Specify("float kind", func() {
 		x := 123.4
 		y := 0.0
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
-	Specify("from complex kind", func() {
+	Specify("complex kind", func() {
 		x := 1i + 2
 		y := 0i + 0
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
-	Specify("from string kind", func() {
+	Specify("string kind", func() {
 		x := "abc"
 		y := ""
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		Expect(y).Should(Equal(x))
 	})
-	Specify("from slice kind", func() {
+	Specify("slice kind", func() {
 		x := []interface{}{
 			1, "a", 0.1,
 		}
@@ -643,26 +841,26 @@ var _ = Describe("Conv", func() {
 		y := make([]interface{}, 0)
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		Expect(len(y)).Should(Equal(len(x)))
 		for i, e := range y {
 			Expect(e).Should(Equal(x[i]))
 		}
 	})
-	Specify("from array kind", func() {
+	Specify("array kind", func() {
 		x := [3]int{1, 2, 3}
 		var y [3]int
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		for i, v := range x {
 			fmt.Fprintf(GinkgoWriter, "%d, %v", i, y[i])
 			Expect(y[i]).Should(Equal(v))
 		}
 	})
-	Specify("from map kind", func() {
+	Specify("map kind", func() {
 		x := map[string]interface{}{
 			"A": 1,
 			"B": "a",
@@ -672,7 +870,7 @@ var _ = Describe("Conv", func() {
 		y := make(map[string]interface{})
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		for k, v := range x {
 			fmt.Fprintf(GinkgoWriter, "%s, %v", k, y[k])
@@ -680,13 +878,6 @@ var _ = Describe("Conv", func() {
 		}
 	})
 	Specify("to struct kind", func() {
-		type stype struct {
-			A int    `table:"a"`
-			B string `table:"_"`
-			C string
-		}
-		var y stype
-
 		x := map[string]interface{}{
 			"a": 1,
 			"A": 11,
@@ -698,13 +889,71 @@ var _ = Describe("Conv", func() {
 			"c": "cc",
 		}
 
+		var y struct {
+			A int    `table:"a"`
+			B string `table:"_"`
+			C string
+		}
+
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).Should(BeNil())
 		Expect(y.A).Should(Equal(1))
 		Expect(y.B).Should(Equal(""))
 		Expect(y.C).Should(Equal("c"))
 		fmt.Fprint(GinkgoWriter, y.A)
+	})
+
+	Specify("time.Duration type", func() {
+		x := "1s"
+		var y time.Duration
+
+		tx := New(x)
+		err := tx.ConvTo(&y)
+		Expect(err).Should(BeNil())
+		Expect(y).Should(Equal(1 * time.Second))
+	})
+
+	Specify("time.Time type", func() {
+		now := time.Now()
+		x := now.Format(TimeLayout)
+		fmt.Fprintln(GinkgoWriter, x)
+		var y time.Time
+
+		tx := New(x)
+		err := tx.ConvTo(&y)
+		Expect(err).Should(BeNil())
+		Expect(y.Format(TimeLayout)).Should(Equal(x))
+	})
+
+	Specify("nest struct kind", func() {
+		type xx struct {
+			X int
+			Y int
+		}
+		var y struct {
+			A int
+			B time.Duration
+			C *xx
+			D *time.Time
+		}
+		x := map[string]interface{}{
+			"A": 1,
+			"B": "1s",
+			"D": "Mon Jan 2 15:04:05 -0700 MST 2006",
+			"C": map[string]int{
+				"X": 10,
+				"Y": 11,
+			},
+		}
+
+		tx := New(x)
+		err := tx.ConvTo(&y)
+		Expect(err).Should(BeNil())
+		// Expect(y.A).Should(Equal(1))
+		// Expect(y.B).Should(Equal(""))
+		// Expect(y.C).Should(Equal("c"))
+		fmt.Fprint(GinkgoWriter, y, y.C)
 	})
 	Specify("to chan kind", func() {
 		x := map[string]interface{}{
@@ -714,7 +963,7 @@ var _ = Describe("Conv", func() {
 		var y chan int
 
 		tx := New(x)
-		err := tx.Conv(&y)
+		err := tx.ConvTo(&y)
 		Expect(err).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 	})
 })
