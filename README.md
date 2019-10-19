@@ -1,6 +1,6 @@
 # The Table in go
 
-[![GoDoc](https://godoc.org/github.com/helloyi/gotable?status.svg)](https://godoc.org/github.com/helloyi/gotable) [![Build Status](https://travis-ci.com/helloyi/gotable.svg?branch=master)](https://travis-ci.com/helloyi/gotable)
+[![GoDoc](https://godoc.org/github.com/helloyi/gotable?status.svg)](https://godoc.org/github.com/helloyi/gotable) [![Build Status](https://travis-ci.com/helloyi/gotable.svg?branch=master)](https://travis-ci.com/helloyi/gotable) [![Coverage Status](https://coveralls.io/repos/github/helloyi/gotable/badge.svg)](https://coveralls.io/github/helloyi/gotable)
 
 Put 'interface{}' on the Table, and to unfold, then, manipulates interface{} value, convenient and simple.
 
