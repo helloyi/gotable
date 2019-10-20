@@ -721,11 +721,50 @@ var _ = Describe("Gets", func() {
 			ExpectErr(t.PList()).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
+	Context("with String()", func() {
+		Specify("bool kind", func() {
+			b := true
+			tb := New(b)
+			Expect(tb.String()).To(Equal("true"))
+
+			b = false
+			tb = New(b)
+			Expect(tb.String()).To(Equal("false"))
+		})
+		Specify("int* kind", func() {
+			x := 123
+			t := New(x)
+			Expect(t.String()).Should(Equal("123"))
+		})
+		Specify("uint* kind", func() {
+			x := uint(123)
+			t := New(x)
+			Expect(t.String()).Should(Equal("123"))
+		})
+		Specify("float* kind", func() {
+			x := 1.2
+			t := New(x)
+			Expect(t.String()).Should(Equal("1.2"))
+
+			x = 1.2e+34
+			t = New(x)
+			Expect(t.String()).Should(Equal("1.2e+34"))
+		})
+		Specify("complex* kind", func() {
+			x := 1 + 2i
+			t := New(x)
+			Expect(t.String()).Should(Equal("(1+2i)"))
+
+			x = -1.2e+34i + 1.2e+34
+			t = New(x)
+			Expect(t.String()).Should(Equal("(1.2e+34-1.2e+34i)"))
+		})
+	})
 })
 
 var _ = Describe("Sets", func() {
 	Context("with Set()", func() {
-		Specify("from int kind", func() {
+		Specify("int kind", func() {
 			m := 123
 			t := New(&m)
 			err := t.Set(2)
@@ -739,17 +778,76 @@ var _ = Describe("Sets", func() {
 			Expect(err).Should(BeNil())
 			Expect(t.Int()).Should(Equal(456))
 		})
-		Specify("from int kind", func() {
-			ss := struct {
-				A, B int
-			}{
-				A: 1,
-				B: 2,
+		Specify("value can't set", func() {
+			t := New(1)
+			Expect(t.Set(2)).To(BeAssignableToTypeOf((*ErrCannotSet)(nil)))
+		})
+		Specify("value kind unequal", func() {
+			x := 1
+			tx := New(&x)
+			Expect(tx.Set(1.2)).To(BeAssignableToTypeOf((*ErrTypeUnequal)(nil)))
+		})
+	})
+
+	Context("with Put()", func() {
+		Specify("to map kind", func() {
+			x := map[string]interface{}{
+				"A": 1,
+				"B": "b",
 			}
-			t := New(&ss)
-			err := t.MustGet("A").Set(123)
-			Expect(err).Should(BeNil())
-			Expect(t.MustGet("A").Int()).Should(Equal(123))
+
+			tx := New(x)
+			Expect(tx.Put("A", 2)).Should(BeNil())
+			Expect(tx.Put("C", 1.2)).Should(BeNil())
+
+			Expect(tx.MustGet("A").Int()).Should(Equal(2))
+			Expect(tx.MustGet("B").String()).Should(Equal("b"))
+			Expect(tx.MustGet("C").Float64()).Should(Equal(1.2))
+		})
+		Specify("to slice kind", func() {
+			x := []interface{}{1, "b"}
+
+			tx := New(x)
+			Expect(tx.Put(0, 2)).Should(BeNil())
+			Expect(tx.Put(2, 1.2)).Should(BeNil())
+
+			Expect(tx.MustGet(0).Int()).Should(Equal(2))
+			Expect(tx.MustGet(1).String()).Should(Equal("b"))
+			Expect(tx.MustGet(2).Float64()).Should(Equal(1.2))
+		})
+		Specify("to array kind", func() {
+			x := [3]interface{}{1, "b"}
+
+			tx := New(&x)
+			Expect(tx.Put(0, 2)).Should(BeNil())
+			Expect(tx.Put(2, 1.2)).Should(BeNil())
+
+			Expect(tx.MustGet(0).Int()).Should(Equal(2))
+			Expect(tx.MustGet(1).String()).Should(Equal("b"))
+			Expect(tx.MustGet(2).Float64()).Should(Equal(1.2))
+		})
+		Specify("to struct kind", func() {
+			x := struct {
+				A int
+				B string
+				C string
+			}{1, "b", ""}
+
+			tx := New(&x)
+			Expect(tx.Put("A", 2)).Should(BeNil())
+			Expect(tx.Put("C", "c")).Should(BeNil())
+
+			Expect(tx.MustGet("A").Int()).Should(Equal(2))
+			Expect(tx.MustGet("B").String()).Should(Equal("b"))
+			Expect(tx.MustGet("C").String()).Should(Equal("c"))
+		})
+		Specify("to other kind", func() {
+			tx := New("a")
+			Expect(tx.Put("nil", "nil")).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+
+			x := 123
+			tx = New(&x)
+			Expect(tx.Put("nil", "nil")).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
 		})
 	})
 })
@@ -965,5 +1063,48 @@ var _ = Describe("ConvTo", func() {
 		tx := New(x)
 		err := tx.ConvTo(&y)
 		Expect(err).To(BeAssignableToTypeOf((*ErrUnsupportedKind)(nil)))
+	})
+})
+
+var _ = Describe("Musts", func() {
+	Specify("with MustInt8()", func() {
+		x := int8(1)
+		t := New(x)
+		Expect(t.MustInt8()).To(Equal(x))
+
+		t = New("test")
+		Expect(func() { t.MustInt8() }).Should(Panic())
+	})
+	Specify("with MustInt16()", func() {
+		x := int16(1)
+		t := New(x)
+		Expect(t.MustInt16()).To(Equal(x))
+
+		t = New("test")
+		Expect(func() { t.MustInt16() }).Should(Panic())
+	})
+	Specify("with MustInt32()", func() {
+		x := int32(1)
+		t := New(x)
+		Expect(t.MustInt32()).To(Equal(x))
+
+		t = New("test")
+		Expect(func() { t.MustInt32() }).Should(Panic())
+	})
+	Specify("with MustInt64()", func() {
+		x := int64(1)
+		t := New(x)
+		Expect(t.MustInt64()).To(Equal(x))
+
+		t = New("test")
+		Expect(func() { t.MustInt64() }).Should(Panic())
+	})
+	Specify("with MustInt()", func() {
+		x := int(1)
+		t := New(x)
+		Expect(t.MustInt()).To(Equal(x))
+
+		t = New("test")
+		Expect(func() { t.MustInt() }).Should(Panic())
 	})
 })
