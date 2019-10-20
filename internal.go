@@ -60,7 +60,7 @@ func (t *Table) mapPut(k, v interface{}) error {
 
 func (t *Table) arrayPut(idx int, v interface{}) error {
 	cap := t.getv().Cap()
-	if idx >= cap {
+	if idx >= cap { // error
 		return nil
 	}
 	ev := t.getv().Index(idx)
@@ -91,7 +91,7 @@ func (t *Table) slicePut(idx int, v interface{}) error {
 // structPut ...
 func (t *Table) structPut(fn string, v interface{}) error {
 	fv := t.getv().FieldByName(fn)
-	if fv.IsValid() {
+	if !fv.IsValid() {
 		return &ErrNotExist{"Table.structPut", fn + " field"}
 	}
 	fv.Set(reflect.ValueOf(v))
