@@ -84,15 +84,23 @@ func (t *Table) Set(v interface{}) error {
 //
 // If t's kind is not map, array, slice or struct, returns ErrUnsupportedKind.
 func (t *Table) Put(k, v interface{}) (err error) {
-	switch t.getv().Kind() {
+	tv := t.getv()
+
+	switch tv.Kind() {
 	case reflect.Map:
 		return t.mapPut(k, v)
-	case reflect.Array:
-		return t.arrayPut(k.(int), v)
 	case reflect.Slice:
 		return t.slicePut(k.(int), v)
-	case reflect.Struct:
-		return t.structPut(k.(string), v)
+	case reflect.Ptr:
+		tvv := indirect(tv)
+		switch tvv.Kind() {
+		case reflect.Array:
+			return (&Table{v: tvv}).arrayPut(k.(int), v)
+		case reflect.Struct:
+			return (&Table{v: tvv}).structPut(k.(string), v)
+		default:
+			return &ErrUnsupportedKind{"Table.Put", t.getv().Kind()}
+		}
 	default:
 		return &ErrUnsupportedKind{"Table.Put", t.getv().Kind()}
 	}
@@ -467,7 +475,11 @@ func (t *Table) Ptr() uintptr {
 	return t.getv().Pointer()
 }
 
+var _StringerType = reflect.TypeOf((fmt.Stringer)(nil))
+
 func (t *Table) String() (string, error) {
+	// TODO: check if implement string
+
 	switch t.getv().Kind() {
 	case reflect.Invalid:
 		return "", nil
