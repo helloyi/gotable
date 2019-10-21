@@ -1,6 +1,6 @@
 # The Table in go
 
-[![GoDoc](https://godoc.org/github.com/helloyi/gotable?status.svg)](https://godoc.org/github.com/helloyi/gotable) [![Build Status](https://travis-ci.com/helloyi/gotable.svg?branch=master)](https://travis-ci.com/helloyi/gotable) [![Coverage Status](https://coveralls.io/repos/github/helloyi/gotable/badge.svg)](https://coveralls.io/github/helloyi/gotable) [![Go Report Card](https://goreportcard.com/badge/github.com/helloyi/gotable)](https://goreportcard.com/report/github.com/helloyi/gotable) [![License](https://img.shields.io/github/license/helloyi/gotable)](https://github.com/helloyi/gotable/blob/master/LICENSE)
+[![GoDoc](https://godoc.org/github.com/helloyi/gotable?status.svg)](https://godoc.org/github.com/helloyi/gotable) [![Build Status](https://travis-ci.com/helloyi/gotable.svg?branch=master)](https://travis-ci.com/helloyi/gotable) [![Coverage Status](https://coveralls.io/repos/github/helloyi/gotable/badge.svg?branch=master)](https://coveralls.io/github/helloyi/gotable?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/helloyi/gotable)](https://goreportcard.com/report/github.com/helloyi/gotable) [![License](https://img.shields.io/github/license/helloyi/gotable)](https://github.com/helloyi/gotable/blob/master/LICENSE)
 
 Put 'interface{}' on the Table, and to unfold, then, manipulates interface{} value, convenient and simple.
 
