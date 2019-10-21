@@ -39,6 +39,11 @@ type (
 		Kind1  reflect.Kind
 		Kind2  reflect.Kind
 	}
+
+	// ErrOutOfRange ...
+	ErrOutOfRange struct {
+		Method string
+	}
 )
 
 func (e *ErrUnsupportedKind) Error() string {
@@ -75,4 +80,8 @@ func (e *ErrCannotSet) Error() string {
 
 func (e *ErrTypeUnequal) Error() string {
 	return "table: call of " + e.Method + " between " + e.Kind1.String() + " and " + e.Kind2.String()
+}
+
+func (e *ErrOutOfRange) Error() string {
+	return "table: call of " + e.Method + " out of range"
 }
