@@ -3,6 +3,7 @@ package table
 import (
 	"fmt"
 	"math/bits"
+	"reflect"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -1106,5 +1107,124 @@ var _ = Describe("Musts", func() {
 
 		t = New("test")
 		Expect(func() { t.MustInt() }).Should(Panic())
+	})
+	Specify("with MustFloat32()", func() {
+		x := float32(1)
+		t := New(x)
+		Expect(t.MustFloat32()).To(Equal(x))
+
+		t = New("test")
+		Expect(func() { t.MustFloat32() }).Should(Panic())
+	})
+	Specify("with MustFloat64()", func() {
+		x := float64(1)
+		t := New(x)
+		Expect(t.MustFloat64()).To(Equal(x))
+
+		t = New("test")
+		Expect(func() { t.MustFloat64() }).Should(Panic())
+	})
+	Specify("with MustGet()", func() {
+		x := map[int]int{1: 1}
+		t := New(x)
+		Expect(t.MustGet(1).Int()).To(Equal(1))
+
+		t = New("test")
+		Expect(func() { t.MustGet(1) }).Should(Panic())
+	})
+	Specify("with MustMap()", func() {
+		x := map[int]int{1: 1}
+		t := New(x)
+		m := t.MustMap()
+		for k, v := range m {
+			Expect(v.MustInt()).To(Equal(x[k.MustInt()]))
+		}
+
+		t = New("test")
+		Expect(func() { t.MustMap() }).Should(Panic())
+	})
+	Specify("with MustSlice()", func() {
+		x := []int{1, 2}
+		t := New(x)
+		s := t.MustSlice()
+		for i, v := range s {
+			Expect(v.MustInt()).To(Equal(x[i]))
+		}
+
+		t = New("test")
+		Expect(func() { t.MustSlice() }).Should(Panic())
+	})
+	Specify("with MustAList()", func() {
+		x := map[int]int{1: 1}
+		t := New(x)
+		m := t.MustAList()
+		for _, kv := range m {
+			Expect(kv[1].MustInt()).To(Equal(x[kv[0].MustInt()]))
+		}
+
+		t = New("test")
+		Expect(func() { t.MustAList() }).Should(Panic())
+	})
+	Specify("with MustPList()", func() {
+		x := map[int]int{1: 1}
+		t := New(x)
+		p := t.MustPList()
+		Expect(p[1].MustInt()).To(Equal(x[p[0].MustInt()]))
+
+		t = New("test")
+		Expect(func() { t.MustPList() }).Should(Panic())
+	})
+})
+
+var _ = Describe("Errs", func() {
+	Specify("of ErrNumOverflow", func() {
+		m := "method"
+		k := reflect.Int
+		es := "table: call of " + m + " overflows " + k.String()
+		Expect((&ErrNumOverflow{m, k}).Error()).To(Equal(es))
+	})
+	Specify("of ErrCannotBeNil", func() {
+		m := "method"
+		es := "table: call of " + m + " on nil value"
+		Expect((&ErrCannotBeNil{m}).Error()).To(Equal(es))
+	})
+	Specify("of ErrNotExist", func() {
+		m := "method"
+		k := "Int"
+		es := "table: call of " + m + " not exist of " + k
+		Expect((&ErrNotExist{m, k}).Error()).To(Equal(es))
+	})
+	Specify("of ErrCannotSet", func() {
+		m := "method"
+		es := "table: call of " + m + " on unaddressable value"
+		Expect((&ErrCannotSet{m}).Error()).To(Equal(es))
+	})
+	Specify("of ErrNumOverflow", func() {
+		m := "method"
+		k := reflect.Int
+		es := "table: call of " + m + " overflows " + k.String()
+		Expect((&ErrNumOverflow{m, k}).Error()).To(Equal(es))
+	})
+	Specify("of ErrTypeUnequal", func() {
+		m := "method"
+		k1 := reflect.Int
+		k2 := reflect.Float32
+		es := "table: call of " + m + " between " + k1.String() + " and " + k2.String()
+		Expect((&ErrTypeUnequal{m, k1, k2}).Error()).To(Equal(es))
+	})
+	Specify("of ErrOutOfRange", func() {
+		m := "method"
+		es := "table: call of " + m + " out of range"
+		Expect((&ErrOutOfRange{m}).Error()).To(Equal(es))
+	})
+	Specify("of ErrUnsupportedKind", func() {
+		m := "method"
+		k := reflect.Int
+		es := "table: call of " + m + " on " + k.String() + " value"
+		Expect((&ErrUnsupportedKind{m, k}).Error()).To(Equal(es))
+
+		ks := "type"
+		es = "table: call of " + m + " on " + ks + " value"
+		Expect((&ErrUnsupportedKind{m, ks}).Error()).To(Equal(es))
 	})
 })
