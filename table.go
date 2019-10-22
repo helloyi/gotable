@@ -1,3 +1,5 @@
+// Package table manipulates(gets,sets,convert etc.) interface{} value,
+// convenient and simple, and reflect-based.
 package table
 
 import (
